@@ -1,0 +1,7 @@
+/build
+/dist
+/*/__pycache__
+/ncnn/realesrgan-ncnn-vulkan
+/ncnn/waifu2x-ncnn-vulkan
+/venv
+/.vscode
