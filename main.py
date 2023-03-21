@@ -2,12 +2,15 @@ import asyncio
 from utils import logger
 from core import start_monitor, get_config
 from core.server import run_server
+from core.ncnn import init_ncnn
 
 __version__ = "0.0.1"
 
 
 async def run():
+    logger.info("正在初始化, 请稍等...")
     start_monitor(get_config("images", "path").split())
+    init_ncnn(get_config("ncnn", "default"))
 
 
 if __name__ == "__main__":

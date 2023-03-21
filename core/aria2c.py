@@ -26,10 +26,10 @@ def init_aria2c():
     if aria2c_executable.exists():
         return
 
-    logger.info("未找到aria2c...")
+    logger.info("未找到aria2c")
     base_aria2_url = "https://gh-api.p3terx.com/repos/aria2/aria2/releases/latest"
 
-    logger.info("正在获取最新aria2c版本...")
+    logger.info("正在获取最新aria2c版本")
     latest_releases = requests.get(base_aria2_url).json()
 
     tag_name = latest_releases["tag_name"]
@@ -46,12 +46,12 @@ def init_aria2c():
     zip_name = Path(dl_url).name
     dl_path = runtime_dir / zip_name
 
-    logger.info("正在下载aria2c组件, 请稍等...")
+    logger.info("正在下载aria2c组件")
     # 下载aria2到runtime目录
     with open(dl_path, "wb") as f:
         f.write(requests.get(dl_url).content)
 
-    logger.info("下载完成, 正在解压...")
+    logger.info("下载完成, 正在解压")
     aria2_dir = runtime_dir / ("aria2-%s-%s" % (version, name_tag))
     zf = ZipFile(dl_path)
     zip_file_path = list(filter(lambda n: "aria2c" in n, zf.namelist()))[0]

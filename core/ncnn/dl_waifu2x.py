@@ -9,7 +9,7 @@ from ..aria2c import Aria2c
 
 
 async def download():
-    logger.info("正在获取 [waifu2x] 最新版本...")
+    logger.info("正在获取 [waifu2x] 最新版本")
 
     base_url = (
         "https://gh-api.p3terx.com/repos/nihui/waifu2x-ncnn-vulkan/releases/latest"
@@ -29,7 +29,7 @@ async def download():
         filter(lambda x: f"{version}-{system}" in x["name"], latest_releases["assets"])
     )[0]
 
-    logger.info(f"正在下载 [waifu2x {version}] , 请稍等...")
+    logger.info(f"正在下载 [waifu2x {version}]")
     
     aria2c = Aria2c(ncnn_dir)
     dl_url = "https://hub.gitmirror.com/" + asset["browser_download_url"]
@@ -39,7 +39,7 @@ async def download():
     process_bar(aria2c, gid, asset["size"])
     aria2c.close()
 
-    logger.info("下载完成, 正在解压...")
+    logger.info("下载完成, 正在解压")
     zip_path = ncnn_dir / file_name
     zf = ZipFile(zip_path)
     zf.extractall(ncnn_dir)

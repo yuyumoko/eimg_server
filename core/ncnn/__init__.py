@@ -1,0 +1,1 @@
+from .vulkan import init_ncnn
