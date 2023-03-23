@@ -1,1 +1,1 @@
-.\venv\Scripts\pyinstaller.exe --noconfirm --onefile --console  "main.py"
+.\venv\Scripts\pyinstaller.exe main.spec

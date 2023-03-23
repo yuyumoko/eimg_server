@@ -17,6 +17,13 @@ ncnn_result_dir = cache_dir / "ncnn/result"
 ncnn_temp_dir.mkdir(parents=True, exist_ok=True)
 ncnn_result_dir.mkdir(parents=True, exist_ok=True)
 
+def clear_cache():
+    for file in ncnn_temp_dir.iterdir():
+        file.unlink()
+    for file in ncnn_result_dir.iterdir():
+        file.unlink()
+
+clear_cache()
 
 class InitBar(IncrementalBar):
     suffix_msg = ""

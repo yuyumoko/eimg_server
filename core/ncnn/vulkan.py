@@ -57,13 +57,15 @@ def convert_image_from_url(image_url, scale, ncnn_name=None):
 
 
 def create_convert_image_from_url_task(image_url, scale, ncnn_name=None):
-    file_name = Path(urlparse(image_url).path).name
+    file = Path(urlparse(image_url).path)
+    file_name = file.name
+    if file.suffix in [".mp4", ".webm", ".m4v", ".gif"]:
+        return file_name, None, None, False
     task_id = str2md5(file_name)
     t = Thread(
         target=convert_image_from_url, args=(image_url, scale, ncnn_name), name=task_id
     )
     # t.setDaemon(True)
     t.start()
-    
 
-    return file_name, task_id, t
+    return file_name, task_id, t, True

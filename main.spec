@@ -9,12 +9,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[],
-    hiddenimports=[
-        'core.ncnn.dl_waifu2x', 
-        'core.ncnn.dl_realesrgan', 
-        'core.ncnn.ncnn_waifu2x',
-        'core.ncnn.ncnn_realesrgan',
-        ],
+    hiddenimports=["core.ncnn.dl_waifu2x", "core.ncnn.dl_realesrgan", "core.ncnn.ncnn_waifu2x", "core.ncnn.ncnn_realesrgan"],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

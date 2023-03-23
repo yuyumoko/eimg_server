@@ -86,18 +86,9 @@
   // 超分辨率插件
   
     var url = window.location.href;
-    
-    // sankakucomplex
-    var sankakucomplex = /sankakucomplex.com(\/.+)?\/post\/show\/(\d+)/gm;
-    var sankakucomplex_match = sankakucomplex.exec(url);
-    if (sankakucomplex_match) {
-        var highres = $("#highres")
-        var orig_img_title = highres.html()
-        var orig_img_url = highres.attr("href")
 
-        var post_content = $("#post-content")
-
-        var img_tool_html = `
+    var default_tool_html = function (orig_img_title, orig_img_url) {
+        return `
         <style>
             .post-tools {
                 padding: 0px 0px 10px 10px;
@@ -115,29 +106,21 @@
         </style>
         <script application/javascript>
         $(function() {
-            var highres = $("#highres")
-            var orig_img_title = highres.html()
-            var orig_img_url = 'https:' + highres.attr("href")
-            
             window.ncnn_vulkan = function (scale) {
-                
-                $.post('${SERVER_URL}ncnn_vulkan', data={scale, url: orig_img_url}).then((result) => {
+                $.post('${SERVER_URL}ncnn_vulkan', data={scale, url: "${orig_img_url}"}).then((result) => {
+                    var ncnn_status = $("#ncnn_status")
+                    var ncnn_info = $("#ncnn_info")
+                    ncnn_status.html('状态: ' + result.msg)
+                    ncnn_info.html('')
                     if (result.retcode == 0) {
-                        var ncnn_status = $("#ncnn_status")
-                        ncnn_status.html('状态: ' + result.msg)
-
                         var wait = window.setInterval(function () {
                             $.getJSON('${SERVER_URL}get_ncnn_vulkan_status/' + result.task_id).then((result) => {
                                 if (result.retcode == 0) {
                                     ncnn_status.html('状态: ' + result.msg)
                                     if (result?.info) {
                                         window.clearTimeout(wait)
-                                        var ncnn_info = $("#ncnn_info")
                                         ncnn_info.html('文件名: ' + result.info.name + '<br>文件大小: ' + result.info.size + '<br><a href=${SERVER_URL}' + 'ncnn_result_image/' + result.info.name + ' target="_blank">点击查看 ' + result.info.width + 'x' + result.info.height + ' (' + result.info.format + ')' + '</a>')
-                                        
                                     }
-                                    
-                                    
                                 }
                             })
                         }, 1000)
@@ -160,11 +143,85 @@
             <div id="ncnn_info"></div>
         </div>
         `
-        post_content.before(img_tool_html)
+    }
+    
+    // sankakucomplex
+    var sankakucomplex = /sankakucomplex.com(\/.+)?\/post\/show\/(\d+)/gm;
+    var sankakucomplex_match = sankakucomplex.exec(url);
+    if (sankakucomplex_match) {
+        console.log('sankakucomplex image page')
+        var highres = $("#highres")
+        var orig_img_title = highres.html()
+        var orig_img_url = 'https:' + highres.attr("href")
+
+        var post_content = $("#post-content")
+
+        post_content.before(default_tool_html(orig_img_title, orig_img_url))
 
     }
 
+    // yande.re
+    var yandere = /yande.re\/post\/show\/(\d+)/gm;
+    var yandere_match = yandere.exec(url);
+
+    // konachan
+    var konachan = /konachan.com\/post\/show\/(\d+)/gm;
+    var konachan_match = konachan.exec(url);
+
+    if (yandere_match || konachan_match) {
+        console.log('yande image page')
+        var image = $("#image")
+        var orig_img_width = image.attr("large_width")
+        var orig_img_height = image.attr("large_height")
+        var orig_img_url = $("#highres").attr("href")
+        var orig_img_size_regex = /.+(\(.+)/gm
+        var orig_img_size = orig_img_size_regex.exec($("#highres").html())[1]
+        var orig_img_title = orig_img_width + 'x' + orig_img_height + ' ' + orig_img_size
+
+        image.before(default_tool_html(orig_img_title, orig_img_url))
+    }
+
+    // gelbooru
+    var gelbooru = /gelbooru.com\/index.php\?page=post(\/.+)?/gm;
+    var gelbooru_match = gelbooru.exec(url);
+
+    //danbooru
+    var danbooru = /danbooru.donmai.us\/posts\/(\d+)/gm;
+    var danbooru_match = danbooru.exec(url);
+
+    // safebooru
+    var safebooru = /safebooru.donmai.us\/posts(\/.+)?/gm;
+    var safebooru_match = safebooru.exec(url);
+
+    if (gelbooru_match || danbooru_match || safebooru_match) {
+        console.log('gelbooru image page')
+        var image = $(".image-container")[0]
+        var orig_img_width = image.getAttribute("data-large-width")
+        var orig_img_height = image.getAttribute("data-large-height")
+        var orig_img_url = $('[rel="noopener"]').attr('href') || $("#highres").attr('href') || image.getAttribute("data-file-url")
+        var orig_img_ext = image.getAttribute("data-file-ext")?.substring(1)
+        if (!orig_img_ext) {
+            orig_img_ext = orig_img_url.split('.').pop()
+        }
+        var orig_img_title = orig_img_width + 'x' + orig_img_height + ' (' + orig_img_ext.toUpperCase() + ')'
+        $(".image-container").before(default_tool_html(orig_img_title, orig_img_url))
+    }
+
+    // rule34
+    var rule34 = /rule34.xxx\/index.php\?page=post(\/.+)?/gm;
+    var rule34_match = rule34.exec(url);
+
+    // xbooru
+    var xbooru = /xbooru.com\/index.php\?page=post(\/.+)?/gm;
+    var xbooru_match = xbooru.exec(url);
     
-
-
+    if (rule34_match || xbooru_match) {
+        console.log('rule34 image page')
+        var image = $("#image")
+        var orig_img_width = image.attr("width")
+        var orig_img_height = image.attr("height")
+        var orig_img_url = $("[property='og:image']").attr("content") || image.attr("src")
+        var orig_img_title = orig_img_width + 'x' + orig_img_height + ' (' + orig_img_url.split('.').pop().toUpperCase().substring(0,3) + ')'
+        image.before(default_tool_html(orig_img_title, orig_img_url))
+    }
 })();

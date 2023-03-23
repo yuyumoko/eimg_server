@@ -1,3 +1,4 @@
+from urllib import parse
 from flask import Flask, Response, abort, jsonify, request
 from flask_cors import CORS
 from .config import get_config
@@ -36,10 +37,14 @@ def ncnn_vulkan():
     url = request.form.get("url")
 
     if not url:
+        ret["msg"] = "错误: 未找到图片"
         return jsonify(ret)
 
-    file_name, task_id, thread = create_convert_image_from_url_task(url, scale)
-    running_tasks[task_id] = {"file_name": file_name, "thread": thread}
+    file_name, task_id, thread, ok = create_convert_image_from_url_task(url, scale)
+    if not ok:
+        ret["msg"] = "错误: 不支持的文件类型"
+        return jsonify(ret)
+    running_tasks[task_id] = {"file_name": file_name, "scale": scale, "thread": thread}
 
     ret["retcode"] = 0
     ret["task_id"] = task_id
@@ -63,6 +68,7 @@ def get_ncnn_vulkan_status(task_id):
             return jsonify(ret)
         else:
             result_image = ncnn_result_dir / running_tasks[task_id]["file_name"]
+            scale = running_tasks[task_id]["scale"]
             running_tasks.pop(task_id)
             if not result_image.exists():
                 ret["msg"] = "处理失败, 请重试"
@@ -70,7 +76,7 @@ def get_ncnn_vulkan_status(task_id):
 
             width, height, format, size = get_image_info(result_image)
 
-            ret["msg"] = "处理完成"
+            ret["msg"] = f"{scale}倍放大处理完成"
             ret["info"] = {
                 "name": result_image.name,
                 "path": str(result_image),
@@ -78,6 +84,7 @@ def get_ncnn_vulkan_status(task_id):
                 "height": height,
                 "format": format,
                 "size": size,
+                "scale": scale,
             }
 
             return jsonify(ret)
@@ -91,7 +98,7 @@ def ncnn_result_image(file_name):  # pragma: no cover
     if not file_name:
         abort(404)
 
-    result_image = ncnn_result_dir / file_name
+    result_image = ncnn_result_dir / parse.quote(file_name)
     if not result_image.exists():
         abort(404)
 
