@@ -38,7 +38,6 @@ async def download():
     gid = aria2c.download(dl_url, file_name)
 
     process_bar(aria2c, gid, asset["size"])
-    aria2c.close()
 
     logger.info("下载完成, 正在解压")
     zip_path = ncnn_dir / file_name

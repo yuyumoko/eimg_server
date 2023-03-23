@@ -2,6 +2,7 @@ import os
 import sys
 import hashlib
 import ujson
+import psutil
 import subprocess
 from pathlib import Path
 
@@ -50,7 +51,7 @@ class Config:
 
     def items(self, section: str, raw=False):
         return self.cf.items(section, raw=raw)
-    
+
     def set(self, section: str, option: str, value: str):
         if not self.cf.has_section(section):
             self.cf.add_section(section)
@@ -79,18 +80,20 @@ def write_json_file(name, data):
     with open(get_path("data", name), "w") as fp:
         fp.write(ujson.dumps(data))
 
+
 def size_format(size):
     if size < 1000:
-        return '%i' % size + 'B'
+        return "%i" % size + "B"
     elif 1000 <= size < 1000000:
-        return '%.1f' % float(size / 1000) + 'KB'
+        return "%.1f" % float(size / 1000) + "KB"
     elif 1000000 <= size < 1000000000:
-        return '%.1f' % float(size / 1000000) + 'MB'
+        return "%.1f" % float(size / 1000000) + "MB"
     elif 1000000000 <= size < 1000000000000:
-        return '%.1f' % float(size / 1000000000) + 'GB'
+        return "%.1f" % float(size / 1000000000) + "GB"
     elif 1000000000000 <= size:
-        return '%.1f' % float(size / 1000000000000) + 'TB'
-    
+        return "%.1f" % float(size / 1000000000000) + "TB"
+
+
 def runCommand(command):
     process = subprocess.Popen(command, stdout=subprocess.PIPE, errors="ignore")
     output_log = ""
@@ -104,5 +107,17 @@ def runCommand(command):
             break
     return output_log
 
+
 def file_size_str(path):
     return size_format(os.stat(path).st_size)
+
+
+def check_process_running(processName: Path | str):
+    processName = processName.name if isinstance(processName, Path) else processName
+    for proc in psutil.process_iter():
+        try:
+            if processName.lower() in proc.name().lower():
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+    return False

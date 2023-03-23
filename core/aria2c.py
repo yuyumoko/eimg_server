@@ -6,7 +6,7 @@ import requests
 from zipfile import ZipFile
 from pathlib import Path
 from aria2p import Client, Stats
-from utils import logger
+from utils import logger, check_process_running
 from .config import get_config, getboolean_config
 
 system_bits, _ = platform.architecture()
@@ -90,6 +90,10 @@ class Aria2c(Client):
         super().__init__()
 
     def __server(self):
+        if check_process_running(aria2c_executable):
+            logger.info("aria2c服务已启动")
+            return
+        
         proxy = f'--all-proxy="{aria2c_proxy}"' if aria2c_proxy else ""
         command = (
             f"{aria2c_executable} --dir={self.dir} -c --quiet --enable-rpc=true --rpc-listen-all=true --rpc-allow-origin-all=true --rpc-listen-port=6800 {proxy}"
@@ -97,10 +101,11 @@ class Aria2c(Client):
         os.popen(command)
 
     def close(self):
-        os.popen(f"taskkill /f /im {aria2c_executable}")
+        self.shutdown()
 
     def download(self, url: str, filename: str, options={}):
         options["out"] = str(filename)
+        options["dir"] = str(self.dir)
         return self.add_uri([url], options=options)
 
     def get_stat(self):

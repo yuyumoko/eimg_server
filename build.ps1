@@ -1,2 +1,1 @@
-.\venv\Scripts\pyinstaller.exe --noconfirm --onefile --console --clean  "main.py" 
-pause
+.\venv\Scripts\pyinstaller.exe --noconfirm --onefile --console  "main.py"

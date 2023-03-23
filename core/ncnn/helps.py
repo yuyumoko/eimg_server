@@ -40,8 +40,6 @@ def process_bar(aria2c: Aria2c, gid, file_size=None):
         bar.max = int(dl_info["length"])
         bar.index = int(dl_info["completedLength"])
         
-        if stat.num_stopped == 1 and bar.max == 0:
-            raise Exception("下载出错, 请重新下载")
         
         if file_size_str is None:
             file_size_str = size_format(int(dl_info["length"]))
@@ -68,7 +66,6 @@ def download_image2temp(image_url, force=False):
     
     gid = aria2c.download(image_url, file_name)
     process_bar(aria2c, gid)
-    aria2c.close()
     logger.info("图片下载完成")
     return temp_image_path
 
