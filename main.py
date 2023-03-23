@@ -1,14 +1,23 @@
 import asyncio
 from utils import logger
-from core import start_monitor, get_config
+from core import start_monitor, get_config, getboolean_config
 from core.server import run_server
 from core.ncnn import init_ncnn
+from core.aria2c import check_proxy
 
 __version__ = "0.0.1"
 
+aria2c_enable = getboolean_config("global", "aria2c_enable")
+aria2c_proxy = get_config("global", "aria2c_proxy")
 
 async def run():
     logger.info("正在初始化, 请稍等...")
+    
+    if aria2c_proxy:
+        logger.info("使用aria2c代理")
+    check_proxy(aria2c_proxy)
+    logger.info("aria2c检测代理通过")
+    
     start_monitor(get_config("images", "path").split())
     init_ncnn(get_config("ncnn", "default"))
 

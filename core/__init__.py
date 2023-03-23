@@ -3,6 +3,7 @@ from typing import List
 from .monitor import *
 from .mem_data import IMG_CACHE
 from .watch_dir import start_watch_dir
+from .config import *
 
 def start_monitor(images_path: List[str]):
     initialize_image_dict(images_path)

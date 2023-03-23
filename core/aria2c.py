@@ -7,6 +7,7 @@ from zipfile import ZipFile
 from pathlib import Path
 from aria2p import Client, Stats
 from utils import logger
+from .config import get_config, getboolean_config
 
 system_bits, _ = platform.architecture()
 
@@ -17,6 +18,21 @@ aria2c_x64 = runtime_dir / "e_aria2c_64.exe"
 aria2c_x32 = runtime_dir / "e_aria2c_32.exe"
 
 aria2c_executable = aria2c_x64 if system_bits == "64bit" else aria2c_x32
+
+aria2c_enable = getboolean_config("global", "aria2c_enable")
+aria2c_proxy = get_config("global", "aria2c_proxy")
+
+
+def check_proxy(proxy_url):
+    try:
+        requests.adapters.DEFAULT_RETRIES = 3
+        res = requests.get(
+            url="http://icanhazip.com/", timeout=2, proxies={"http": proxy_url}
+        )
+        proxyIP = res.text
+        return proxyIP
+    except:
+        raise Exception("aria2c代理IP无效！ : " + proxy_url)
 
 
 def init_aria2c():
@@ -74,7 +90,10 @@ class Aria2c(Client):
         super().__init__()
 
     def __server(self):
-        command = f"{aria2c_executable} --dir={self.dir} -c --quiet --enable-rpc=true"
+        proxy = f'--all-proxy="{aria2c_proxy}"' if aria2c_proxy else ""
+        command = (
+            f"{aria2c_executable} --dir={self.dir} -c --quiet --enable-rpc=true --rpc-listen-all=true --rpc-allow-origin-all=true --rpc-listen-port=6800 {proxy}"
+        )
         os.popen(command)
 
     def close(self):

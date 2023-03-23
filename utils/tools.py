@@ -2,6 +2,7 @@ import os
 import sys
 import hashlib
 import ujson
+import subprocess
 from pathlib import Path
 
 from sqlitedict import SqliteDict
@@ -89,3 +90,19 @@ def size_format(size):
         return '%.1f' % float(size / 1000000000) + 'GB'
     elif 1000000000000 <= size:
         return '%.1f' % float(size / 1000000000000) + 'TB'
+    
+def runCommand(command):
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, errors="ignore")
+    output_log = ""
+    while True:
+        out = process.stdout.readline()
+        output_log += out
+        return_code = process.poll()
+        if return_code is not None:
+            for out in process.stdout.readlines():
+                output_log += out
+            break
+    return output_log
+
+def file_size_str(path):
+    return size_format(os.stat(path).st_size)

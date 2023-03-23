@@ -1,1 +1,1 @@
-from .vulkan import init_ncnn
+from .vulkan import *
