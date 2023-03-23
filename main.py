@@ -5,7 +5,7 @@ from core.server import run_server
 from core.ncnn import init_ncnn
 from core.aria2c import check_proxy
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 aria2c_enable = getboolean_config("global", "aria2c_enable")
 aria2c_proxy = get_config("global", "aria2c_proxy")
