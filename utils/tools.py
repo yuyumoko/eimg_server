@@ -82,16 +82,10 @@ def write_json_file(name, data):
 
 
 def size_format(size):
-    if size < 1000:
-        return "%i" % size + "B"
-    elif 1000 <= size < 1000000:
-        return "%.1f" % float(size / 1000) + "KB"
-    elif 1000000 <= size < 1000000000:
-        return "%.1f" % float(size / 1000000) + "MB"
-    elif 1000000000 <= size < 1000000000000:
-        return "%.1f" % float(size / 1000000000) + "GB"
-    elif 1000000000000 <= size:
-        return "%.1f" % float(size / 1000000000000) + "TB"
+    for x in ["bytes", "KB", "MB", "GB", "TB"]:
+        if size < 1024.0:
+            return "%3.1f %s" % (size, x)
+        size /= 1024.0
 
 
 def runCommand(command):
@@ -121,3 +115,14 @@ def check_process_running(processName: Path | str):
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
     return False
+
+
+def get_folder_size(folder_path): # Path
+    size = 0
+    for path, dirs, files in os.walk(str(folder_path)):
+        for f in files:
+            fp = os.path.join(path, f)
+            size += os.path.getsize(fp)
+    return size
+    
+    

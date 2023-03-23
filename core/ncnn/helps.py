@@ -3,7 +3,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from time import monotonic
 from progress.bar import IncrementalBar
-from utils import size_format, logger, file_size_str
+from utils import size_format, logger, file_size_str,  get_folder_size
 from ..aria2c import Aria2c
 
 ncnn_dir = Path("./ncnn").resolve()
@@ -23,7 +23,7 @@ def clear_cache():
     for file in ncnn_result_dir.iterdir():
         file.unlink()
 
-clear_cache()
+# clear_cache()
 
 class InitBar(IncrementalBar):
     suffix_msg = ""
@@ -63,6 +63,10 @@ def process_bar(aria2c: Aria2c, gid, file_size=None):
 
 
 def download_image2temp(image_url, force=False):
+    if get_folder_size(ncnn_result_dir) > 104857600 * 3: # 缓存文件夹大于300M时清空
+        logger.info("缓存文件夹大于300M，正在清空")
+        clear_cache()
+    
     file_name = Path(urlparse(image_url).path).name
     temp_image_path = ncnn_temp_dir / file_name
     if temp_image_path.exists() and not force:

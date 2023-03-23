@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         色图查重插件
 // @namespace    esetu
-// @version      0.3
+// @version      0.3.2
 // @description  根据本地图片标记重复的图片背景红色
 // @author       erinilis
 // @include      *://yande.re/*
@@ -173,9 +173,9 @@
         var image = $("#image")
         var orig_img_width = image.attr("large_width")
         var orig_img_height = image.attr("large_height")
-        var orig_img_url = $("#highres").attr("href")
+        var orig_img_url = $("#png").attr("href") || $("#highres").attr("href")
         var orig_img_size_regex = /.+(\(.+)/gm
-        var orig_img_size = orig_img_size_regex.exec($("#highres").html())[1]
+        var orig_img_size = orig_img_size_regex.exec($("#png").html() || $("#highres").html())[1]
         var orig_img_title = orig_img_width + 'x' + orig_img_height + ' ' + orig_img_size
 
         image.before(default_tool_html(orig_img_title, orig_img_url))
@@ -196,8 +196,8 @@
     if (gelbooru_match || danbooru_match || safebooru_match) {
         console.log('gelbooru image page')
         var image = $(".image-container")[0]
-        var orig_img_width = image.getAttribute("data-large-width")
-        var orig_img_height = image.getAttribute("data-large-height")
+        var orig_img_width = image.getAttribute("data-width")
+        var orig_img_height = image.getAttribute("data-height")
         var orig_img_url = $('[rel="noopener"]').attr('href') || $("#highres").attr('href') || image.getAttribute("data-file-url")
         var orig_img_ext = image.getAttribute("data-file-ext")?.substring(1)
         if (!orig_img_ext) {
