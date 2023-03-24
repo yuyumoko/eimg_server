@@ -1,10 +1,15 @@
+import sys
 from urllib import parse
+from werkzeug.serving import WSGIRequestHandler
 from flask import Flask, Response, abort, jsonify, request
 from flask_cors import CORS
 from .config import get_config
 from .mem_data import get_image_cache
 from .ncnn import create_convert_image_from_url_task
 from .ncnn.helps import ncnn_result_dir, get_image_info
+
+if not sys.gettrace():
+    WSGIRequestHandler.log_request = lambda *args: None
 
 app = Flask(__name__)
 app.config["JSON_AS_ASCII"] = False
