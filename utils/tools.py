@@ -88,18 +88,31 @@ def size_format(size):
         size /= 1024.0
 
 
-def runCommand(command):
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, errors="ignore")
-    output_log = ""
+def runCommand(command, callback: callable = None):
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    log = []
+    line_num = 0
+    # 实时获取输出
     while True:
-        out = process.stdout.readline()
-        output_log += out
+        output = process.stdout.readline() or process.stderr.readline()
         return_code = process.poll()
-        if return_code is not None:
-            for out in process.stdout.readlines():
-                output_log += out
+
+        if not output and return_code is not None:
             break
-    return output_log
+        elif not output and return_code == 0:
+            break
+        elif output:
+            line = output.decode("utf-8").strip()
+            log.append(line)
+            if callback:
+                if callback(line, line_num):
+                    process.wait()
+                    break
+            else:
+                print(line)
+            line_num += 1
+
+    return log
 
 
 def file_size_str(path):
@@ -117,12 +130,10 @@ def check_process_running(processName: Path | str):
     return False
 
 
-def get_folder_size(folder_path): # Path
+def get_folder_size(folder_path):  # Path
     size = 0
     for path, dirs, files in os.walk(str(folder_path)):
         for f in files:
             fp = os.path.join(path, f)
             size += os.path.getsize(fp)
     return size
-    
-    

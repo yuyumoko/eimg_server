@@ -15,7 +15,7 @@ class image_watch_handler(FileSystemEventHandler):
     def on_created(self, event):
         file = Path(event.src_path)
         if file.suffix[1:] not in suffix_allow:
-            logger.info("pass file: %s" % file)
+            # logger.info("pass file: %s" % file)
             return
 
         async def run_async():
