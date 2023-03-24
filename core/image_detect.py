@@ -42,8 +42,11 @@ def auto_file_name(file: Path, md5: str):
     if not what_type:
         what_type = file_type
 
+    if not suffix.get(what_type) and file_type:
+        return
+    
     # 文件名是否与MD5相同并且后缀是否正确
-    if file.stem == md5 and suffix.get(what_type) == file.suffix[1:]:
+    if file.stem == md5 and suffix.get(what_type) == file_type:
         return
 
     # 设置新的文件名
