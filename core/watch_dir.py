@@ -24,11 +24,11 @@ class image_watch_handler(FileSystemEventHandler):
             except Exception as e:
                 logger.error("生成MD5失败了, 很可能是找不到文件, 请重新保存\n文件: %s" % file)
                 return
-            
-            auto_file_name(file, file_name)
-            
-            IMG_CACHE[file_name] = {"file": str(file)}
-            logger.info("(%s)添加成功 文件:\n%s" % (file_name, file))
+            if file.exists():
+                auto_file_name(file, file_name)
+                
+                IMG_CACHE[file_name] = {"file": str(file)}
+                logger.info("(%s)添加成功 文件:\n%s" % (file_name, file))
 
         asyncio.run(run_async())
 

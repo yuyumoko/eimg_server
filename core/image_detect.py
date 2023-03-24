@@ -2,7 +2,12 @@ import imghdr
 import shutil
 from pathlib import Path
 from PIL import Image
-from utils import logger
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_fixed,
+)
+from utils import logger, retry_log
 from .config import getboolean_config, get_config, items_config
 
 
@@ -21,24 +26,22 @@ no_convert_type = get_config("auto-file-name-setting", "no_convert_type").split(
 suffix = dict(items_config("auto-file-name-suffix"))
 
 
+@retry(stop=stop_after_attempt(20), wait=wait_fixed(3), before=retry_log, reraise=True)
 def auto_file_name(file: Path, md5: str):
     # 是否启用自动重命名
     if not getboolean_config("global", "enable_auto_file_name"):
         return
-    
+
     file_type = file.suffix[1:]
     # 是否跳过该文件类型
     if file_type in pass_suffix:
-        return
-
-    if not file.exists():
         return
 
     # 获取图片真实后缀
     what_type = imghdr.what(file)
     if not what_type:
         what_type = file_type
-        
+
     # 文件名是否与MD5相同并且后缀是否正确
     if file.stem == md5 and suffix.get(what_type) == file.suffix[1:]:
         return

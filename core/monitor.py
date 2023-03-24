@@ -4,9 +4,6 @@ from typing import List
 from progress.bar import IncrementalBar
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import (
-    RetryCallState,
-    RetryError,
-    _utils,
     retry,
     stop_after_attempt,
     wait_fixed,
@@ -31,11 +28,6 @@ Modify_time_db = connect_db(tablename="modify_time")
 
 suffix_allow = get_config("global", "suffix_allow").split()
 
-
-def retry_log(retry_state: "RetryCallState"):
-    if retry_state.attempt_number > 1:
-        fn_name = _utils.get_callback_name(retry_state.fn)
-        logger.debug(fn_name + " 重试次数: %s" % retry_state.attempt_number)
 
 
 @retry(stop=stop_after_attempt(20), wait=wait_fixed(3), before=retry_log, reraise=True)
