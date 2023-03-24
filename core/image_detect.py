@@ -25,10 +25,7 @@ def auto_file_name(file: Path, md5: str):
     # 是否启用自动重命名
     if not getboolean_config("global", "enable_auto_file_name"):
         return
-    # 文件名是否与MD5相同
-    if file.stem == md5:
-        return
-
+    
     file_type = file.suffix[1:]
     # 是否跳过该文件类型
     if file_type in pass_suffix:
@@ -41,6 +38,10 @@ def auto_file_name(file: Path, md5: str):
     what_type = imghdr.what(file)
     if not what_type:
         what_type = file_type
+        
+    # 文件名是否与MD5相同并且后缀是否正确
+    if file.stem == md5 and suffix.get(what_type) == file.suffix[1:]:
+        return
 
     # 设置新的文件名
     new_file = file.with_name(md5 + file.suffix)
