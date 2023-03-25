@@ -7,7 +7,7 @@ from tenacity import (
     stop_after_attempt,
     wait_fixed,
 )
-from utils import logger, retry_log
+from utils import logger, retry_log, is_md5
 from .config import getboolean_config, get_config, items_config
 
 
@@ -42,7 +42,7 @@ def auto_file_name(file: Path, md5: str):
     if not what_type:
         what_type = file_type
 
-    if not suffix.get(what_type) and file_type:
+    if not suffix.get(what_type) and file_type and is_md5(file.stem):
         return
     
     # 文件名是否与MD5相同并且后缀是否正确

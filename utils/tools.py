@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import hashlib
 import ujson
@@ -66,6 +67,10 @@ def md5(context):
 
 def str2md5(s):
     return md5(str(s).encode())
+
+
+def is_md5(s):
+    return bool(re.match(r"^[a-fA-F\d]{32}$", s))
 
 
 def read_json_file(name):
