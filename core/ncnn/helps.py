@@ -17,6 +17,8 @@ ncnn_result_dir = cache_dir / "ncnn/result"
 ncnn_temp_dir.mkdir(parents=True, exist_ok=True)
 ncnn_result_dir.mkdir(parents=True, exist_ok=True)
 
+Image.MAX_IMAGE_PIXELS = 3000000000
+
 def clear_cache():
     for file in ncnn_temp_dir.iterdir():
         file.unlink()

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         色图查重插件
 // @namespace    esetu
-// @version      0.3.2
+// @version      0.3.4
 // @description  根据本地图片标记重复的图片背景红色
 // @author       erinilis
 // @include      *://yande.re/*
@@ -23,10 +23,10 @@
 (function () {
   "use strict";
 
-  var SERVER_URL = "http://127.0.0.1:7768/"
+  let SERVER_URL = "http://127.0.0.1:7768/"
 
 
-  var check_md5 = function (md5, element) {
+  let check_md5 = function (md5, element) {
       $.getJSON(SERVER_URL + 'check_md5/' + md5).then((result)=>{
           if(result.retcode == 0) {
               $(element).css("backgroundColor", "darkred")
@@ -35,45 +35,45 @@
       })
   }
 
-  var handler_arr = function (arr, callback) {
-      for (var i = 0; i < arr.length; i++) {
-          var src = $("img", arr[i]).attr("src");
+  let handler_arr = function (arr, callback) {
+      for (let i = 0; i < arr.length; i++) {
+          let src = $("img", arr[i]).attr("src");
           check_md5(callback(src), arr[i])
       }
   }
 
-  var url2md5 = function (url) {
-      var tmp = url.split("/");
-      var filename = tmp[tmp.length - 1].split("?")[0].replace(/\..+/, "");
-      var regex = /thumbnail_(\w+)/gm;
-      var md5 = regex.exec(filename)
+  let url2md5 = function (url) {
+      let tmp = url.split("/");
+      let filename = tmp[tmp.length - 1].split("?")[0].replace(/\..+/, "");
+      let regex = /thumbnail_(\w+)/gm;
+      let md5 = regex.exec(filename)
       return md5 ? md5[1] : filename
   }
 
-  var gelbooru_hanlder = function (arr) { 
+  let gelbooru_hanlder = function (arr) { 
       console.log('gelbooru_hanlder')
       handler_arr(arr, function (src) {
-          var regex = /thumbnail_(\w+)/gm;
-          var md5 = regex.exec(src)
+          let regex = /thumbnail_(\w+)/gm;
+          let md5 = regex.exec(src)
           if (md5) {
               return md5[1]
           }
       })
   }
 
-  var sankakucomplex_handler = function (arr) {
+  let sankakucomplex_handler = function (arr) {
       console.log('sankakucomplex_handler')
       handler_arr(arr, url2md5)
   }
 
-  var danbooru_handler = function (arr) {
+  let danbooru_handler = function (arr) {
       console.log('danbooru_handler')
       handler_arr(arr, url2md5)
   }
 
-  var gelbooru_list = $(".thumbnail-preview");
-  var sankakucomplex_list = $(".thumb")
-  var danbooru_list = $('.post-preview')
+  let gelbooru_list = $(".thumbnail-preview");
+  let sankakucomplex_list = $(".thumb")
+  let danbooru_list = $('.post-preview')
 
   if (gelbooru_list?.length) {
       gelbooru_hanlder(gelbooru_list)
@@ -85,9 +85,9 @@
   //////////////////
   // 超分辨率插件
   
-    var url = window.location.href;
+    let url = window.location.href;
 
-    var default_tool_html = function (orig_img_title, orig_img_url) {
+    let default_tool_html = function (orig_img_title, orig_img_url) {
         return `
         <style>
             .post-tools {
@@ -98,6 +98,7 @@
             }
             .ncnn_button {
                 margin-left: 5px;
+                margin-top: 5px;
                 color: #ff761c;
             }
             .ncnn_button:hover {
@@ -109,48 +110,64 @@
         </style>
         <script application/javascript>
         $(function() {
-            window.ncnn_vulkan = function (scale) {
-                $(".ncnn_button").attr("disabled", true)
-                var ncnn_modal = $("#ncnn_model").val()
-                
-                $.post('${SERVER_URL}ncnn_vulkan', data={scale, modal: ncnn_modal, url: "${orig_img_url}"}).then((result) => {
-                    var ncnn_status = $("#ncnn_status")
-                    var ncnn_info = $("#ncnn_info")
-                    ncnn_status.html('状态: ' + result.msg)
-                    ncnn_info.html('')
-                    if (result.retcode == 0) {
-                        var wait = window.setInterval(function () {
-                            $.getJSON('${SERVER_URL}get_ncnn_vulkan_status/' + result.task_id).then((result) => {
-                                if (result.retcode == 0) {
-                                    ncnn_status.html('状态: ' + result.msg)
-                                    if (result?.info) {
-                                        $(".ncnn_button").attr("disabled", false)
-                                        window.clearTimeout(wait)
-                                        ncnn_info.html('文件名: ' + result.info.name + '<br>文件大小: ' + result.info.size + '<br><a href=${SERVER_URL}' + 'ncnn_result_image/' + result.info.name + ' target="_blank">点击查看 ' + result.info.width + 'x' + result.info.height + ' (' + result.info.format + ')' + '</a>')
-                                    }
-                                }
-                            })
-                        }, 1000)
-                        
+            $.getJSON('${SERVER_URL}ncnn_config').then((ncnn_config) => {
+                window.ncnn_config = ncnn_config
+                let ncnn_modal = $("#ncnn_model")
+                for (let name in ncnn_config) {
+                    let info = ncnn_config[name]
+                    ncnn_modal.append('<option value="' + name + '">' + info.title + '</option>')
+                }
+
+                window.on_change_ncnn_model = function () {
+                    let ncnn_modal = $("#ncnn_model").val()
+                    let ncnn_buttons = $("#ncnn_buttons")
+                    ncnn_buttons.html('')
+                    let scales = window.ncnn_config[ncnn_modal].scales.split(" ")
+                    for (let key in scales) {
+                        let scale = scales[key]
+                        ncnn_buttons.append('<button class="ncnn_button" onclick="window.ncnn_vulkan(' + scale + ')">超分放大 x' + scale + '</button>')
                     }
-                })
-            }
-            
+                }
+
+                window.on_change_ncnn_model()
+
+                window.ncnn_vulkan = function (scale) {
+                    $(".ncnn_button").attr("disabled", true)
+                    let ncnn_modal = $("#ncnn_model").val()
+                    
+                    $.post('${SERVER_URL}ncnn_vulkan', data={scale, modal: ncnn_modal, url: "${orig_img_url}"}).then((result) => {
+                        let ncnn_status = $("#ncnn_status")
+                        let ncnn_info = $("#ncnn_info")
+                        ncnn_status.html('状态: ' + result.msg)
+                        ncnn_info.html('')
+                        if (result.retcode == 0) {
+                            let wait = window.setInterval(function () {
+                                $.getJSON('${SERVER_URL}get_ncnn_vulkan_status/' + result.task_id).then((result) => {
+                                    if (result.retcode == 0) {
+                                        ncnn_status.html('状态: ' + result.msg)
+                                        $(".ncnn_button").attr("disabled", false)
+                                        if (result?.info) {
+                                            window.clearTimeout(wait)
+                                            ncnn_info.html('文件名: ' + result.info.name + '<br>文件大小: ' + result.info.size + '<br><a href=${SERVER_URL}' + 'ncnn_result_image/' + result.info.name + ' target="_blank">点击查看 ' + result.info.width + 'x' + result.info.height + ' (' + result.info.format + ')' + '</a>')
+                                        }
+                                    }
+                                })
+                            }, 1000)
+                            
+                        }
+                    })
+                }
+            })
+
         });
         </script>
         <div class="post-tools">
             <p><a href="${orig_img_url}" target="_blank">查看原图: ${orig_img_title}</a>
                 <label for="ncnn_model" style="margin-left: 5px;">超分模型:</label>
-                <select id="ncnn_model">
-                    <option value="realcugan">realcugan (推荐)</option>
-                    <option value="realesrgan">realesrgan</option>
-                    <option value="waifu2x">waifu2x</option>
-                </select>
+                <select id="ncnn_model" style="padding: unset;" onchange="window.on_change_ncnn_model()" ></select>
             </p>
-            <button class="ncnn_button" id="ncnn_x2" onclick="window.ncnn_vulkan(2)">超分放大 x2</button>
-            <button class="ncnn_button" id="ncnn_x4" onclick="window.ncnn_vulkan(4)">超分放大 x4</button>
-            <button class="ncnn_button" id="ncnn_x8" onclick="window.ncnn_vulkan(8)">超分放大 x8</button>
-            <button class="ncnn_button" id="ncnn_x16" onclick="window.ncnn_vulkan(2)">超分放大 x16</button>
+            <div id="ncnn_buttons">
+            </div>
         </div>
         <div id="ncnn_result">
             <p id="ncnn_status"></p>
@@ -160,82 +177,82 @@
     }
     
     // sankakucomplex
-    var sankakucomplex = /sankakucomplex.com(\/.+)?\/post\/show\/(\d+)/gm;
-    var sankakucomplex_match = sankakucomplex.exec(url);
+    let sankakucomplex = /sankakucomplex.com(\/.+)?\/post\/show\/(\d+)/gm;
+    let sankakucomplex_match = sankakucomplex.exec(url);
     if (sankakucomplex_match) {
         console.log('sankakucomplex image page')
-        var highres = $("#highres")
-        var orig_img_title = highres.html()
-        var orig_img_url = 'https:' + highres.attr("href")
+        let highres = $("#highres")
+        let orig_img_title = highres.html()
+        let orig_img_url = 'https:' + highres.attr("href")
 
-        var post_content = $("#post-content")
+        let post_content = $("#post-content")
 
         post_content.before(default_tool_html(orig_img_title, orig_img_url))
 
     }
 
     // yande.re
-    var yandere = /yande.re\/post\/show\/(\d+)/gm;
-    var yandere_match = yandere.exec(url);
+    let yandere = /yande.re\/post\/show\/(\d+)/gm;
+    let yandere_match = yandere.exec(url);
 
     // konachan
-    var konachan = /konachan.com\/post\/show\/(\d+)/gm;
-    var konachan_match = konachan.exec(url);
+    let konachan = /konachan.com\/post\/show\/(\d+)/gm;
+    let konachan_match = konachan.exec(url);
 
     if (yandere_match || konachan_match) {
         console.log('yande image page')
-        var image = $("#image")
-        var orig_img_width = image.attr("large_width")
-        var orig_img_height = image.attr("large_height")
-        var orig_img_url = $("#png").attr("href") || $("#highres").attr("href")
-        var orig_img_size_regex = /.+(\(.+)/gm
-        var orig_img_size = orig_img_size_regex.exec($("#png").html() || $("#highres").html())[1]
-        var orig_img_title = orig_img_width + 'x' + orig_img_height + ' ' + orig_img_size
+        let image = $("#image")
+        let orig_img_width = image.attr("large_width")
+        let orig_img_height = image.attr("large_height")
+        let orig_img_url = $("#png").attr("href") || $("#highres").attr("href")
+        let orig_img_size_regex = /.+(\(.+)/gm
+        let orig_img_size = orig_img_size_regex.exec($("#png").html() || $("#highres").html())[1]
+        let orig_img_title = orig_img_width + 'x' + orig_img_height + ' ' + orig_img_size
 
         image.before(default_tool_html(orig_img_title, orig_img_url))
     }
 
     // gelbooru
-    var gelbooru = /gelbooru.com\/index.php\?page=post(\/.+)?/gm;
-    var gelbooru_match = gelbooru.exec(url);
+    let gelbooru = /gelbooru.com\/index.php\?page=post(\/.+)?/gm;
+    let gelbooru_match = gelbooru.exec(url);
 
     //danbooru
-    var danbooru = /danbooru.donmai.us\/posts\/(\d+)/gm;
-    var danbooru_match = danbooru.exec(url);
+    let danbooru = /danbooru.donmai.us\/posts\/(\d+)/gm;
+    let danbooru_match = danbooru.exec(url);
 
     // safebooru
-    var safebooru = /safebooru.donmai.us\/posts(\/.+)?/gm;
-    var safebooru_match = safebooru.exec(url);
+    let safebooru = /safebooru.donmai.us\/posts(\/.+)?/gm;
+    let safebooru_match = safebooru.exec(url);
 
     if (gelbooru_match || danbooru_match || safebooru_match) {
         console.log('gelbooru image page')
-        var image = $(".image-container")[0]
-        var orig_img_width = image.getAttribute("data-width")
-        var orig_img_height = image.getAttribute("data-height")
-        var orig_img_url = $('[rel="noopener"]').attr('href') || $("#highres").attr('href') || image.getAttribute("data-file-url")
-        var orig_img_ext = image.getAttribute("data-file-ext")?.substring(1)
+        let image = $(".image-container")[0]
+        let orig_img_width = image.getAttribute("data-width")
+        let orig_img_height = image.getAttribute("data-height")
+        let orig_img_url = $('[rel="noopener"]').attr('href') || $("#highres").attr('href') || image.getAttribute("data-file-url")
+        let orig_img_ext = image.getAttribute("data-file-ext")?.substring(1)
         if (!orig_img_ext) {
             orig_img_ext = orig_img_url.split('.').pop()
         }
-        var orig_img_title = orig_img_width + 'x' + orig_img_height + ' (' + orig_img_ext.toUpperCase() + ')'
+        let orig_img_title = orig_img_width + 'x' + orig_img_height + ' (' + orig_img_ext.toUpperCase() + ')'
         $(".image-container").before(default_tool_html(orig_img_title, orig_img_url))
     }
 
     // rule34
-    var rule34 = /rule34.xxx\/index.php\?page=post(\/.+)?/gm;
-    var rule34_match = rule34.exec(url);
+    let rule34 = /rule34.xxx\/index.php\?page=post(\/.+)?/gm;
+    let rule34_match = rule34.exec(url);
 
     // xbooru
-    var xbooru = /xbooru.com\/index.php\?page=post(\/.+)?/gm;
-    var xbooru_match = xbooru.exec(url);
+    let xbooru = /xbooru.com\/index.php\?page=post(\/.+)?/gm;
+    let xbooru_match = xbooru.exec(url);
     
     if (rule34_match || xbooru_match) {
         console.log('rule34 image page')
-        var image = $("#image")
-        var orig_img_width = image.attr("width")
-        var orig_img_height = image.attr("height")
-        var orig_img_url = $("[property='og:image']").attr("content") || image.attr("src")
-        var orig_img_title = orig_img_width + 'x' + orig_img_height + ' (' + orig_img_url.split('.').pop().toUpperCase().substring(0,3) + ')'
+        let image = $("#image")
+        let orig_img_width = image.attr("width")
+        let orig_img_height = image.attr("height")
+        let orig_img_url = $("[property='og:image']").attr("content") || image.attr("src")
+        let orig_img_title = orig_img_width + 'x' + orig_img_height + ' (' + orig_img_url.split('.').pop().toUpperCase().substring(0,3) + ')'
         image.before(default_tool_html(orig_img_title, orig_img_url))
     }
 })();

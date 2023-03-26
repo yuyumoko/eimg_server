@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from importlib import import_module
 from utils import logger, str2md5
 from ..config import get_config, getboolean_config
-from .helps import download_image2temp
+from .helps import download_image2temp, ncnn_result_dir
 
 Enable = getboolean_config("ncnn", "enable")
 
@@ -19,7 +19,9 @@ def get_ncnn(ncnn_name):
     vulkan = get_config(ncnn_name, "vulkan")
     return Path(vulkan).resolve()
 
+
 init_ncnn_ok = {}
+
 
 def init_ncnn(ncnn_name):
     if not Enable:
@@ -27,7 +29,7 @@ def init_ncnn(ncnn_name):
         return
     if not ncnn_name:
         raise ValueError("未指定超分辨率组件, 请在config.ini中配置ncnn -> default")
-    
+
     if init_ncnn_ok.get(ncnn_name, False):
         return
 
@@ -50,8 +52,12 @@ def convert_image(image_path, scale, ncnn_name=None):
         raise ValueError("未指定超分辨率组件, 请在config.ini中配置ncnn -> default")
 
     vulkan = get_ncnn(ncnn_name)
+    output = ncnn_result_dir / image_path.name
+    if output.exists():
+        output.unlink()
+
     return import_module(f".ncnn_{ncnn_name}", __package__).convert_image(
-        image_path, scale, vulkan
+        image_path, scale, vulkan, output
     )
 
 
