@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         色图查重插件
 // @namespace    esetu
-// @version      0.3.4
+// @version      0.3.5
 // @description  根据本地图片标记重复的图片背景红色
 // @author       erinilis
 // @include      *://yande.re/*
@@ -125,7 +125,9 @@
                     let scales = window.ncnn_config[ncnn_modal].scales.split(" ")
                     for (let key in scales) {
                         let scale = scales[key]
-                        ncnn_buttons.append('<button class="ncnn_button" onclick="window.ncnn_vulkan(' + scale + ')">超分放大 x' + scale + '</button>')
+                        if (!isNaN(scale)) {
+                            ncnn_buttons.append('<button class="ncnn_button" onclick="window.ncnn_vulkan(' + scale + ')">超分放大 x' + scale + '</button>')
+                        }
                     }
                 }
 
