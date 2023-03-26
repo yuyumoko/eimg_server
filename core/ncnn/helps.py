@@ -72,12 +72,12 @@ def download_image2temp(image_url, force=False):
     if temp_image_path.exists() and not force:
         return temp_image_path
     
-    logger.info("正在下载图片")
+    logger.info(" - 正在下载图片 : %s" % file_name)
     aria2c = Aria2c(ncnn_temp_dir)
     
     gid = aria2c.download(image_url, file_name)
     process_bar(aria2c, gid)
-    logger.info("图片下载完成")
+    logger.info(" - 图片下载完成 : %s" % file_name)
     return temp_image_path
 
 

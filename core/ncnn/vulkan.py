@@ -12,14 +12,14 @@ Enable = getboolean_config("ncnn", "enable")
 
 def download_vulkan(name):
     logger.info("正在下载超分辨率 [%s] 组件" % name)
-
-    asyncio.gather(import_module(f".dl_{name}", __package__).download())
+    import_module(f".dl_{name}", __package__).download()
 
 
 def get_ncnn(ncnn_name):
     vulkan = get_config(ncnn_name, "vulkan")
     return Path(vulkan).resolve()
 
+init_ncnn_ok = {}
 
 def init_ncnn(ncnn_name):
     if not Enable:
@@ -27,6 +27,9 @@ def init_ncnn(ncnn_name):
         return
     if not ncnn_name:
         raise ValueError("未指定超分辨率组件, 请在config.ini中配置ncnn -> default")
+    
+    if init_ncnn_ok.get(ncnn_name, False):
+        return
 
     vulkan = get_ncnn(ncnn_name)
 
@@ -34,6 +37,7 @@ def init_ncnn(ncnn_name):
         download_vulkan(ncnn_name)
     else:
         logger.info("+ 超分辨率 [%s] 已启用" % ncnn_name)
+        init_ncnn_ok[ncnn_name] = True
 
 
 def convert_image(image_path, scale, ncnn_name=None):
@@ -52,6 +56,7 @@ def convert_image(image_path, scale, ncnn_name=None):
 
 
 def convert_image_from_url(image_url, scale, ncnn_name=None):
+    init_ncnn(ncnn_name)
     image_path = download_image2temp(image_url)
     return convert_image(image_path, scale, ncnn_name)
 

@@ -4,11 +4,12 @@ from .helps import ncnn_result_dir
 
 
 def handler_process(line, line_num):
-    logger.info(line)
+    if line_num < 4:
+        logger.info(line)
 
 
 def convert_image(image_path: Path, scale, vulkan):
-    logger.info(f" -> 正在使用 [waifu2x] 进行超分辨率处理: {image_path.name}")
+    logger.info(f" -> 正在使用 [realcugan] 进行超分辨率处理: {image_path.name}")
     output = ncnn_result_dir / image_path.name
     # output = output.with_stem(output.stem + "_x" + str(scale))
     cli_args = [
@@ -19,8 +20,6 @@ def convert_image(image_path: Path, scale, vulkan):
         str(output),
         "-s",
         str(scale),
-        "-n",
-        "0",
         "-x",
     ]
     runCommand(cli_args, handler_process)

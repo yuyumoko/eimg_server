@@ -5,7 +5,7 @@ from core.server import run_server
 from core.ncnn import init_ncnn
 from core.aria2c import check_proxy
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 aria2c_enable = getboolean_config("global", "aria2c_enable")
 aria2c_proxy = get_config("global", "aria2c_proxy")
@@ -19,7 +19,7 @@ async def run():
     logger.info("aria2c检测代理通过")
     
     start_monitor(get_config("images", "path").split())
-    init_ncnn(get_config("ncnn", "default"))
+    # init_ncnn(get_config("ncnn", "default"))
 
 
 if __name__ == "__main__":

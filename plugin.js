@@ -93,11 +93,14 @@
             .post-tools {
                 padding: 0px 0px 10px 10px;
             }
-            .post-tools button {
+            .post-tools p {
+                margin-left: 5px;
+            }
+            .ncnn_button {
                 margin-left: 5px;
                 color: #ff761c;
             }
-            .post-tools button:hover {
+            .ncnn_button:hover {
                 background-color: #ffffe0;
             }
             #ncnn_result {
@@ -107,7 +110,10 @@
         <script application/javascript>
         $(function() {
             window.ncnn_vulkan = function (scale) {
-                $.post('${SERVER_URL}ncnn_vulkan', data={scale, url: "${orig_img_url}"}).then((result) => {
+                $(".ncnn_button").attr("disabled", true)
+                var ncnn_modal = $("#ncnn_model").val()
+                
+                $.post('${SERVER_URL}ncnn_vulkan', data={scale, modal: ncnn_modal, url: "${orig_img_url}"}).then((result) => {
                     var ncnn_status = $("#ncnn_status")
                     var ncnn_info = $("#ncnn_info")
                     ncnn_status.html('状态: ' + result.msg)
@@ -118,6 +124,7 @@
                                 if (result.retcode == 0) {
                                     ncnn_status.html('状态: ' + result.msg)
                                     if (result?.info) {
+                                        $(".ncnn_button").attr("disabled", false)
                                         window.clearTimeout(wait)
                                         ncnn_info.html('文件名: ' + result.info.name + '<br>文件大小: ' + result.info.size + '<br><a href=${SERVER_URL}' + 'ncnn_result_image/' + result.info.name + ' target="_blank">点击查看 ' + result.info.width + 'x' + result.info.height + ' (' + result.info.format + ')' + '</a>')
                                     }
@@ -132,11 +139,18 @@
         });
         </script>
         <div class="post-tools">
-            <a href="${orig_img_url}" target="_blank">原图: ${orig_img_title}</a>
-            <button id="ncnn_x2" onclick="window.ncnn_vulkan(2)">超分辨率放大 x2</button>
-            <button id="ncnn_x4" onclick="window.ncnn_vulkan(4)">超分辨率放大 x4</button>
-            <button id="ncnn_x8" onclick="window.ncnn_vulkan(8)">超分辨率放大 x8</button>
-            <button id="ncnn_x16" onclick="window.ncnn_vulkan(2)">超分辨率放大 x16</button>
+            <p><a href="${orig_img_url}" target="_blank">查看原图: ${orig_img_title}</a>
+                <label for="ncnn_model" style="margin-left: 5px;">超分模型:</label>
+                <select id="ncnn_model">
+                    <option value="realcugan">realcugan (推荐)</option>
+                    <option value="realesrgan">realesrgan</option>
+                    <option value="waifu2x">waifu2x</option>
+                </select>
+            </p>
+            <button class="ncnn_button" id="ncnn_x2" onclick="window.ncnn_vulkan(2)">超分放大 x2</button>
+            <button class="ncnn_button" id="ncnn_x4" onclick="window.ncnn_vulkan(4)">超分放大 x4</button>
+            <button class="ncnn_button" id="ncnn_x8" onclick="window.ncnn_vulkan(8)">超分放大 x8</button>
+            <button class="ncnn_button" id="ncnn_x16" onclick="window.ncnn_vulkan(2)">超分放大 x16</button>
         </div>
         <div id="ncnn_result">
             <p id="ncnn_status"></p>

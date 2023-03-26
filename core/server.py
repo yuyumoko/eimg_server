@@ -39,13 +39,14 @@ running_tasks = {}
 def ncnn_vulkan():
     ret = {"retcode": -1}
     scale = int(request.form.get("scale", 2))
+    modal = request.form.get("modal", "realcugan")
     url = request.form.get("url")
 
     if not url:
         ret["msg"] = "错误: 未找到图片"
         return jsonify(ret)
 
-    file_name, task_id, thread, ok = create_convert_image_from_url_task(url, scale)
+    file_name, task_id, thread, ok = create_convert_image_from_url_task(url, scale, modal)
     if not ok:
         ret["msg"] = "错误: 不支持的文件类型"
         return jsonify(ret)

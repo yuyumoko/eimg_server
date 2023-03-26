@@ -5,11 +5,18 @@ block_cipher = None
 
 
 a = Analysis(
-    ['main.py'],
+    ["main.py"],
     pathex=[],
     binaries=[],
     datas=[],
-    hiddenimports=["core.ncnn.dl_waifu2x", "core.ncnn.dl_realesrgan", "core.ncnn.ncnn_waifu2x", "core.ncnn.ncnn_realesrgan"],
+    hiddenimports=[
+        "core.ncnn.dl_waifu2x",
+        "core.ncnn.dl_realesrgan",
+        "core.ncnn.dl_realcugan",
+        "core.ncnn.ncnn_waifu2x",
+        "core.ncnn.ncnn_realesrgan",
+        "core.ncnn.ncnn_realcugan",
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -28,7 +35,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='main',
+    name="main",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

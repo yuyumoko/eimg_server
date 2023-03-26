@@ -9,13 +9,9 @@ from ..aria2c import Aria2c
 
 
 def download():
-    logger.info(" - 正在获取 [waifu2x] 最新版本")
-
-    base_url = (
-        "https://gh-api.p3terx.com/repos/nihui/waifu2x-ncnn-vulkan/releases/latest"
-    )
-    latest_releases = requests.get(base_url).json()
-    version = latest_releases["tag_name"]
+    logger.info(" - 正在获取 [realcugan] 最新版本")
+    base_url = "https://gh-api.p3terx.com/repos/nihui/realcugan-ncnn-vulkan/releases"
+    releases = requests.get(base_url).json()
 
     system = platform.system()
     if system == "Linux":
@@ -25,12 +21,17 @@ def download():
     elif system == "Darwin":
         system = "macos"
 
-    asset = list(
-        filter(lambda x: f"{version}-{system}" in x["name"], latest_releases["assets"])
-    )[0]
+    for release in releases:
+        assets = release["assets"]
+        if not assets:
+            continue
+        else:
+            version = release["tag_name"]
+            asset = list(filter(lambda x: system in x["name"], assets))[0]
+            break
 
-    logger.info(f" - 正在下载 [waifu2x {version}]")
-    
+    logger.info(f" - 正在下载 [realcugan {version}]")
+
     aria2c = Aria2c(ncnn_dir)
     dl_url = "https://hub.gitmirror.com/" + asset["browser_download_url"]
     file_name = Path(dl_url).name
@@ -45,6 +46,6 @@ def download():
     zf.close()
 
     zip_path.unlink()
-    shutil.move(zip_path.with_suffix(""), ncnn_dir / "waifu2x-ncnn-vulkan")
-
-    logger.info(" - 组件 [waifu2x] 安装成功")
+    shutil.move(zip_path.with_suffix(""), ncnn_dir / "realcugan-ncnn-vulkan")
+    
+    logger.info(" - 组件 [realcugan] 安装成功")
