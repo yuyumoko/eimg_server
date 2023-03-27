@@ -19,7 +19,7 @@ def convert_image(image_path: Path, scale, vulkan, output):
         "-s",
         str(scale),
         "-x",
-        "-v",
+        # "-v",
     ]
     if scale == 2:
         cli_args += ["-m", "models-pro"]

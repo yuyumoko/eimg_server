@@ -18,7 +18,7 @@ def convert_image(image_path: Path, scale, vulkan, output):
         "-s",
         str(scale),
         "-x",
-        "-v"
+        # "-v"
     ]
     runCommand(cli_args, handler_process)
     logger.info(" -> 超分辨率处理完成")
