@@ -15,8 +15,8 @@ async def run():
 
     if aria2c_proxy:
         logger.info("使用aria2c代理")
-    check_proxy(aria2c_proxy)
-    logger.info("aria2c检测代理通过")
+        check_proxy(aria2c_proxy)
+        logger.info("aria2c检测代理通过")
 
     start_monitor(get_config("images", "path").split())
 
