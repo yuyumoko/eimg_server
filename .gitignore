@@ -1,7 +1,15 @@
 /build
 /dist
 /*/__pycache__
+/*/*/__pycache__
+/__pycache__
 /ncnn/realesrgan-ncnn-vulkan
 /ncnn/waifu2x-ncnn-vulkan
 /venv
 /.vscode
+/release
+/cache
+/data/*
+/runtime
+/ncnn/*-vulkan
+/config.ini
