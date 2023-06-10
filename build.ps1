@@ -2,7 +2,7 @@ $version = Invoke-Expression ('.\venv\Scripts\python.exe -c "from main import __
 
 New-Item -ErrorAction Ignore -ItemType Directory -Path release
 Set-Location .\release
-Invoke-Expression ("..\venv\Scripts\pyinstaller.exe ..\main.spec")
+Invoke-Expression ("..\venv\Scripts\pyinstaller.exe ..\main.spec --upx-dir=H:\python\upx")
 
 Write-Output  "build version: $version"
 

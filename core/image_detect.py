@@ -9,7 +9,7 @@ from tenacity import (
 )
 from utils import logger, retry_log, is_md5
 from .config import getboolean_config, get_config, items_config
-
+from .iwara import iwara_file_handler
 
 def test_jpeg(h, f):
     # https://bugs.python.org/issue28591
@@ -25,12 +25,43 @@ no_convert_type = get_config("auto-file-name-setting", "no_convert_type").split(
 
 suffix = dict(items_config("auto-file-name-suffix"))
 
+image_auto_file_name = getboolean_config("images", "enable_auto_file_name")
+image_path_list = get_config("images", "path").split()
+image_path_list = [Path(i) for i in image_path_list]
+
+iwara_auto_file_name = getboolean_config("iwara", "enable_auto_file_name")
+iwara_path_list = get_config("iwara", "path").split()
+iwara_path_list = [Path(i) for i in iwara_path_list]
+
+
+
+def check_file_need_rename(file: Path):
+    parent = file.parent
+    drive = Path(file.drive)
+    
+    if all([image_auto_file_name, iwara_auto_file_name]):
+        return True, None
+    
+    if not image_auto_file_name:
+        while parent != drive:
+            if parent in image_path_list:
+                return False
+            parent = parent.parent
+            
+    if not iwara_auto_file_name:
+        while parent != drive:
+            if parent in iwara_path_list:
+                _, video_id = iwara_file_handler(file)
+                return False, video_id
+            parent = parent.parent
+    
+    return True, None
 
 @retry(stop=stop_after_attempt(20), wait=wait_fixed(3), before=retry_log, reraise=True)
 def auto_file_name(file: Path, md5: str):
     # 是否启用自动重命名
-    if not getboolean_config("global", "enable_auto_file_name"):
-        return
+    # if not check_file_need_rename(file):
+    #     return
 
     file_type = file.suffix[1:]
     # 是否跳过该文件类型

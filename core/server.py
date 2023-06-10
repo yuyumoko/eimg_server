@@ -20,7 +20,6 @@ def check_md5(md5):
     ret = {"retcode": -1}
     if not md5:
         return jsonify(ret)
-
     file = get_image_cache(md5.lower())
     if not file:
         return jsonify(ret)

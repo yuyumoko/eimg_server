@@ -1,6 +1,6 @@
 import re
 import threading
-from typing import List
+from typing import List, Callable
 from progress.bar import IncrementalBar
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tenacity import (
@@ -18,16 +18,10 @@ class InitBar(IncrementalBar):
     suffix = "%(percent).2f%% %(index)d/%(max)d %(suffix_msg)s"
 
 
-Executor = ThreadPoolExecutor(
-    max_workers=int(get_config("global", "init_thread_num")), thread_name_prefix="T"
-)
-
-
 Cache_md5_db = connect_db(tablename="cache_md5")
 Modify_time_db = connect_db(tablename="modify_time")
 
 suffix_allow = get_config("global", "suffix_allow").split()
-
 
 
 @retry(stop=stop_after_attempt(20), wait=wait_fixed(3), before=retry_log, reraise=True)
@@ -48,19 +42,29 @@ def get_img_md5(file: Path, print_log=True):
     return file_name
 
 
-def image_set_cache_md5(file: Path, bar: InitBar, md5_filename: bool):
+def image_set_cache_md5(file: Path, bar: InitBar, md5_filename: bool, set_md5=None):
     if md5_filename:
         md5 = file.stem.lower()
+    elif set_md5:
+        md5 = set_md5
     else:
         md5 = get_img_md5(file, False)
+
     thread_name = threading.current_thread().getName()
     bar.suffix_msg = f"{thread_name}_{md5}"
     bar.next()
     return {md5: {"file": str(file)}}
 
 
-@fn_use_info
-def initialize_image_dict(images_path: List[str], original_name=False):
+Executor = ThreadPoolExecutor(
+    max_workers=int(get_config("global", "init_thread_num")), thread_name_prefix="T"
+)
+
+
+# @fn_use_info
+def initialize_image_dict(
+    images_path: List[str], original_name=False, file_handler: Callable = None
+):
     for index, img_dir in enumerate(images_path):
         # 判断文件夹的修改时间 是否和上一次不一样, 才去重新载入词典
         modify_time_key = str2md5(img_dir)
@@ -76,30 +80,42 @@ def initialize_image_dict(images_path: List[str], original_name=False):
                 continue
 
         file_list_len = len(os.listdir(img_dir))
-        bar = InitBar("生成词典[%s/%s]" % (index + 1, len(images_path)), max=file_list_len)
+
+        bar = None
 
         img_dir = (img_dir, Path(img_dir))[isinstance(img_dir, str)]
 
         futures = []
         for file in img_dir.iterdir():
             if file.is_dir():
-                initialize_image_dict([file], original_name)
+                initialize_image_dict([file], original_name, file_handler)
                 continue
             if file.suffix[1:] not in suffix_allow:
                 # 如果不是允许的后缀名则跳过
                 continue
+            if not bar:
+                bar = InitBar(
+                    "生成词典[%s/%s]" % (index + 1, len(images_path)), max=file_list_len
+                )
+
+            set_md5 = None
+            if file_handler:
+                file, set_md5 = file_handler(file)
             futures.append(
-                Executor.submit(image_set_cache_md5, file, bar, original_name)
+                Executor.submit(image_set_cache_md5, file, bar, original_name, set_md5)
             )
 
         for x in as_completed(futures):
             data.update(x.result())
 
-        bar.goto(file_list_len)
-        bar.finish()
+        if bar:
+            bar.goto(file_list_len)
+            bar.finish()
 
         # 写入缓存
         Modify_time_db[modify_time_key] = mtime
         write_json_file(modify_time_key, data)
 
         update_image_cache(data)
+
+        # Executor.shutdown(wait=True)

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         色图查重插件
 // @namespace    esetu
-// @version      0.3.5
+// @version      0.3.6
 // @description  根据本地图片标记重复的图片背景红色
 // @author       erinilis
 // @include      *://yande.re/*
@@ -16,6 +16,7 @@
 // @match        *://*.iwara.tv/*
 // @exclude      *://staging.iwara.tv/*
 // @require      https://code.jquery.com/jquery-3.6.0.min.js
+// @require      https://gist.github.com/raw/2625891/waitForKeyElements.js
 // @run-at       document-end
 // @grant        none
 // ==/UserScript==
@@ -82,6 +83,31 @@
   } else if (danbooru_list?.length) {
       danbooru_handler(danbooru_list)
   }
+  
+  
+  // iwara
+  let iwara = /iwara.tv\/?(\w+)?/gm;
+  let iwara_match = iwara.exec(window.location.href);
+  
+  if (iwara_match) {
+      console.log('iwara video page')
+      waitForKeyElements (
+        ".videoTeaser__thumbnail", 
+          function () {
+            let videos = $(".videoTeaser__thumbnail")
+            let md5_regex = /\/video\/(\w+)/;
+
+            for (let i = 0; i < videos.length; i++) {
+                let src = $(videos[i]).attr("href");
+                let md5 = md5_regex.exec(src)[1]
+                check_md5(md5, videos[i].parentElement.parentElement)
+             }
+          }
+    );
+      
+  }
+    
+    
   //////////////////
   // 超分辨率插件
   
