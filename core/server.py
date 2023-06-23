@@ -34,4 +34,13 @@ def run_server():
     server_host = get_config("global", "server_host")
     server_port = get_config("global", "server_port")
     add_ncnn_routes(app)
-    app.run(host=server_host, port=server_port)
+
+    if sys.gettrace():
+        app.run(host=server_host, port=server_port)
+    else:
+        from gevent import pywsgi
+        from utils import logger
+
+        logger.info("server start at %s:%s" % (server_host, server_port))
+        server = pywsgi.WSGIServer((server_host, int(server_port)), app, log=None)
+        server.serve_forever()

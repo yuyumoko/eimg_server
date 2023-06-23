@@ -205,7 +205,7 @@
     }
     
     // sankakucomplex
-    let sankakucomplex = /sankakucomplex.com(\/.+)?\/post\/show\/(\d+)/gm;
+    let sankakucomplex = /sankakucomplex.com(\/.+)?\/post\/show.+/gm;
     let sankakucomplex_match = sankakucomplex.exec(url);
     if (sankakucomplex_match) {
         console.log('sankakucomplex image page')
