@@ -1,12 +1,15 @@
 import asyncio
 from pathlib import Path
+
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
+
+from utils import logger, str2md5
+
 from .config import get_config
-from utils import logger
-from .monitor import get_img_md5
-from .mem_data import IMG_CACHE
 from .image_detect import auto_file_name, check_file_need_rename
+from .mem_data import ImgDB
+from .monitor import get_img_md5
 
 suffix_allow = get_config("global", "suffix_allow").split()
 
@@ -15,7 +18,6 @@ class image_watch_handler(FileSystemEventHandler):
     def on_created(self, event):
         file = Path(event.src_path)
         if file.suffix[1:] not in suffix_allow:
-            # logger.info("pass file: %s" % file)
             return
 
         async def run_async():
@@ -30,11 +32,23 @@ class image_watch_handler(FileSystemEventHandler):
                 if need_rename:
                     auto_file_name(file, file_name)
                 
-                IMG_CACHE[file_name] = {"file": str(file)}
+                with ImgDB() as DB:
+                    DB.set_data(file_name, file)
+                    
                 logger.info("(%s)添加成功 文件:\n%s" % (file_name, file))
 
         asyncio.run(run_async())
-
+        
+    # def on_deleted(self, event):
+    #     file = Path(event.src_path)
+    #     if file.suffix[1:] not in suffix_allow:
+    #         return
+        
+    #     async def run_async():
+    #         with ImgDB() as DB:
+    #             DB.del_data(get_img_md5(file))
+        
+    #     asyncio.run(run_async())
 
 def start_watch_dir(images_path):
     event_handler = image_watch_handler()
