@@ -23,9 +23,14 @@ async def run():
         logger.info("aria2c检测代理通过")
 
     with ImgDB() as DB:
-        start_monitor(get_config("images", "path").split(), DB=DB)
+        images_path = get_config("images", "path").split()
+        images_watch_path = get_config("images", "watch_path").split()
+        start_monitor(images_path, images_watch_path, DB=DB)
+
+        iwara_path = get_config("iwara", "path").split()
+        iwara_watch_path = get_config("iwara", "watch_path").split()
         start_monitor(
-            get_config("iwara", "path").split(), file_handler=iwara_file_handler, DB=DB
+            iwara_path, iwara_watch_path, file_handler=iwara_file_handler, DB=DB
         )
 
         if DB.is_mem_db:
