@@ -199,7 +199,7 @@ class ImgDB(SimpleSqlite):
         if not data:
             return None
         dir_db = self.table(data)
-        return IMG_DATA(**dir_db)
+        return IMG_DATA(**dir_db[hash])
 
     def set_data(self, hash: str, file: Path) -> IMG_DATA:
         # 设置总表的索引
