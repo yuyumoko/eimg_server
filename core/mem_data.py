@@ -195,7 +195,10 @@ class ImgDB(SimpleSqlite):
         return str2md5(Path(name))
 
     def get_data(self, hash: str) -> IMG_DATA:
-        dir_db = self.table(self.get(hash))
+        data = self.get(hash)
+        if not data:
+            return None
+        dir_db = self.table(data)
         return IMG_DATA(**dir_db)
 
     def set_data(self, hash: str, file: Path) -> IMG_DATA:

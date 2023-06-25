@@ -1,15 +1,15 @@
 import imghdr
 import shutil
 from pathlib import Path
+
 from PIL import Image
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_fixed,
-)
-from utils import logger, retry_log, is_md5
-from .config import getboolean_config, get_config, items_config
+from tenacity import retry, stop_after_attempt, wait_fixed
+
+from utils import is_md5, logger, retry_log
+
+from .config import get_config, getboolean_config, items_config
 from .iwara import iwara_file_handler
+
 
 def test_jpeg(h, f):
     # https://bugs.python.org/issue28591
