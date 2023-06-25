@@ -1,10 +1,11 @@
 import sys
 
-from werkzeug.serving import WSGIRequestHandler
 from flask import Flask, Response, abort, jsonify, request
 from flask_cors import CORS
+from werkzeug.serving import WSGIRequestHandler
+
 from .config import get_config
-from .mem_data import get_image_cache
+from .mem_data import ImgDB
 from .ncnn import add_routes as add_ncnn_routes
 
 if not sys.gettrace():
@@ -14,18 +15,19 @@ app = Flask(__name__)
 app.config["JSON_AS_ASCII"] = False
 CORS(app, resources=r"/*")
 
+DB = ImgDB()
 
 @app.route("/check_md5/<md5>", methods=["GET"])
 def check_md5(md5):
     ret = {"retcode": -1}
     if not md5:
         return jsonify(ret)
-    file = get_image_cache(md5.lower())
+    file = DB.get_data(md5.lower())
     if not file:
         return jsonify(ret)
 
     ret["retcode"] = 0
-    ret["file"] = file["file"]
+    ret.update(file.dict())
 
     return jsonify(ret)
 
@@ -39,6 +41,7 @@ def run_server():
         app.run(host=server_host, port=server_port)
     else:
         from gevent import pywsgi
+
         from utils import logger
 
         logger.info("server start at %s:%s" % (server_host, server_port))

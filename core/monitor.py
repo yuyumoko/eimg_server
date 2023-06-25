@@ -1,16 +1,16 @@
 import re
 import threading
-from typing import List, Callable
-from progress.bar import IncrementalBar
+from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_fixed,
-)
-from .config import get_config
+from typing import Callable, List
+
+from progress.bar import IncrementalBar
+from tenacity import retry, stop_after_attempt, wait_fixed
+
 from utils import *
-from .mem_data import update_image_cache
+
+from .config import get_config
+from .mem_data import IMG_DATA, ImgDB
 
 
 class InitBar(IncrementalBar):
@@ -18,8 +18,7 @@ class InitBar(IncrementalBar):
     suffix = "%(percent).2f%% %(index)d/%(max)d %(suffix_msg)s"
 
 
-Cache_md5_db = connect_db(tablename="cache_md5")
-Modify_time_db = connect_db(tablename="modify_time")
+Cache_md5_db = {}
 
 suffix_allow = get_config("global", "suffix_allow").split()
 
@@ -53,31 +52,41 @@ def image_set_cache_md5(file: Path, bar: InitBar, md5_filename: bool, set_md5=No
     thread_name = threading.current_thread().getName()
     bar.suffix_msg = f"{thread_name}_{md5}"
     bar.next()
-    return {md5: {"file": str(file)}}
+    return ImgDB.new_data(md5, file)
 
 
 Executor = ThreadPoolExecutor(
     max_workers=int(get_config("global", "init_thread_num")), thread_name_prefix="T"
 )
 
+DirectoryInfo = namedtuple("DirectoryInfo", ["path", "mtime"])
+
 
 # @fn_use_info
 def initialize_image_dict(
-    images_path: List[str], original_name=False, file_handler: Callable = None
+    images_path: List[str],
+    original_name=False,
+    file_handler: Callable = None,
+    DB: ImgDB = None,
 ):
-    for index, img_dir in enumerate(images_path):
-        # 判断文件夹的修改时间 是否和上一次不一样, 才去重新载入词典
-        modify_time_key = str2md5(img_dir)
-        mt_info = Modify_time_db.get(modify_time_key)
-        mtime = os.path.getmtime(img_dir)
+    if not DB:
+        raise ValueError("数据库初始化失败")
 
-        data = {}
+    for index, img_dir in enumerate(images_path):
+        directory_info_db = DB.table("directory_info")
+
+        # 判断文件夹的修改时间 是否和上一次不一样, 才去重新载入词典
+        dir_key = DB.new_dir_key(img_dir)
+        di_db = directory_info_db.get(dir_key)
+        if di_db:
+            di_db = DirectoryInfo(**di_db)
+
+        mtime = os.path.getmtime(img_dir)
         # 如果时间没变过 那直接载入之前的数据
-        if mt_info and mt_info == mtime:
-            data = read_json_file(modify_time_key)
-            if data:
-                update_image_cache(data)
-                continue
+        if di_db and di_db.mtime == mtime:
+            continue
+
+        di_db = DirectoryInfo(path=str(img_dir), mtime=mtime)
 
         file_list_len = len(os.listdir(img_dir))
 
@@ -88,7 +97,7 @@ def initialize_image_dict(
         futures = []
         for file in img_dir.iterdir():
             if file.is_dir():
-                initialize_image_dict([file], original_name, file_handler)
+                initialize_image_dict([file], original_name, file_handler, DB)
                 continue
             if file.suffix[1:] not in suffix_allow:
                 # 如果不是允许的后缀名则跳过
@@ -105,17 +114,42 @@ def initialize_image_dict(
                 Executor.submit(image_set_cache_md5, file, bar, original_name, set_md5)
             )
 
-        for x in as_completed(futures):
-            data.update(x.result())
-
         if bar:
             bar.goto(file_list_len)
             bar.finish()
 
-        # 写入缓存
-        Modify_time_db[modify_time_key] = mtime
-        write_json_file(modify_time_key, data)
+        dir_img_db = DB.table(dir_key)
+        current_hash = []
+        bar = InitBar("保存数据", max=len(futures))
+        for x in as_completed(futures):
+            img_data: IMG_DATA = x.result()
+            current_hash.append(img_data.hash)
 
-        update_image_cache(data)
+            bar.suffix_msg = f"{img_data.hash}"
+            bar.next()
+            if not DB.is_mem_db:
+                data_img: IMG_DATA = dir_img_db.get(img_data.hash)
+                if data_img:
+                    data_img = IMG_DATA(**data_img)
 
-        # Executor.shutdown(wait=True)
+                if data_img and img_data.mtime == data_img.mtime:
+                    continue
+
+            dir_img_db[img_data.hash] = img_data.dict()
+            DB.set(img_data.hash, dir_key)
+
+        directory_info_db[dir_key] = di_db._asdict()
+
+        # 处理被删除的数据
+        db_hash_list = dir_img_db.keys()
+        for hash in db_hash_list:
+            if hash not in current_hash:
+                dir_img_db.pop(hash)
+                DB.db.pop(hash)
+
+        # 保存数据库
+        DB.save_table_and_close(dir_img_db)
+        DB.save_table_and_close(directory_info_db)
+
+        bar.goto(len(futures))
+        bar.finish()
