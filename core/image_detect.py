@@ -66,7 +66,7 @@ def auto_file_name(file: Path, md5: str):
     file_type = file.suffix[1:]
     # 是否跳过该文件类型
     if file_type in pass_suffix:
-        return
+        return file
 
     # 获取图片真实后缀
     what_type = imghdr.what(file)
@@ -74,11 +74,11 @@ def auto_file_name(file: Path, md5: str):
         what_type = file_type
 
     if not suffix.get(what_type) and file_type and is_md5(file.stem):
-        return
+        return file
     
     # 文件名是否与MD5相同并且后缀是否正确
     if file.stem == md5 and suffix.get(what_type) == file_type:
-        return
+        return file
 
     # 设置新的文件名
     new_file = file.with_name(md5 + file.suffix)
@@ -107,3 +107,4 @@ def auto_file_name(file: Path, md5: str):
     # 不需要转换的直接重命名文件
     shutil.move(str(file), str(new_file))
     logger.info("自动重命名: %s -> %s" % (file, new_file))
+    return new_file

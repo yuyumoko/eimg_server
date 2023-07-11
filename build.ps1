@@ -15,13 +15,13 @@ Copy-Item ..\config.example.ini .\$releasedir\config.ini
 
 # rename main.exe
 $newname = "eimg_server.exe"
-Move-Item .\dist\main.exe .\$newname
+Move-Item -Force .\dist\main.exe .\$newname
 
 # move exe to run
-Copy-Item .\$newname ..\eimg_server.exe
+Copy-Item -Force .\$newname ..\eimg_server.exe
 
 # pack release dir
-Move-Item .\$newname .\$releasedir
+Move-Item -Force .\$newname .\$releasedir
 Compress-Archive -Force -Path .\$releasedir -DestinationPath .\$releasedir.zip
 
 # clean up

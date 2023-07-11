@@ -16,11 +16,11 @@ suffix_allow = get_config("global", "suffix_allow").split()
 
 class image_watch_handler(FileSystemEventHandler):
     def on_created(self, event):
-        file = Path(event.src_path)
-        if file.suffix[1:] not in suffix_allow:
+        _file = Path(event.src_path)
+        if _file.suffix[1:] not in suffix_allow:
             return
 
-        async def run_async():
+        async def run_async(file: Path):
             need_rename, file_name = check_file_need_rename(file)
             try:
                 if need_rename and file_name is None:
@@ -30,14 +30,14 @@ class image_watch_handler(FileSystemEventHandler):
                 return
             if file.exists():
                 if need_rename:
-                    auto_file_name(file, file_name)
+                    file = auto_file_name(file, file_name)
                 
                 with ImgDB() as DB:
                     DB.set_data(file_name, file)
                     
                 logger.info("(%s)添加成功 文件:\n%s" % (file_name, file))
 
-        asyncio.run(run_async())
+        asyncio.run(run_async(_file))
         
     # def on_deleted(self, event):
     #     file = Path(event.src_path)
