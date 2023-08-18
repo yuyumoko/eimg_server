@@ -37,19 +37,19 @@ iwara_path_list = [Path(i) for i in iwara_path_list]
 
 def check_file_need_rename(file: Path):
     parent = file.parent
-    drive = Path(file.drive)
+    # drive = Path(file.drive)
     
     if all([image_auto_file_name, iwara_auto_file_name]):
         return True, None
     
     if not image_auto_file_name:
-        while parent != drive:
+        while parent != parent.parent:
             if parent in image_path_list:
                 return False
             parent = parent.parent
             
     if not iwara_auto_file_name:
-        while parent != drive:
+        while parent != parent.parent:
             if parent in iwara_path_list:
                 _, video_id = iwara_file_handler(file)
                 return False, video_id
