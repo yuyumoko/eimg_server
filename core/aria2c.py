@@ -22,6 +22,10 @@ aria2c_executable = aria2c_x64 if system_bits == "64bit" else aria2c_x32
 aria2c_enable = getboolean_config("global", "aria2c_enable")
 aria2c_proxy = get_config("global", "aria2c_proxy")
 
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36"
+}
 
 def check_proxy(proxy_url):
     try:
@@ -65,7 +69,7 @@ def init_aria2c():
     logger.info("正在下载aria2c组件")
     # 下载aria2到runtime目录
     with open(dl_path, "wb") as f:
-        f.write(requests.get(dl_url).content)
+        f.write(requests.get(dl_url, headers=headers).content)
 
     logger.info("下载完成, 正在解压")
     aria2_dir = runtime_dir / ("aria2-%s-%s" % (version, name_tag))
